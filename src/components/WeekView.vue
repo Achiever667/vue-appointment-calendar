@@ -113,7 +113,7 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
         </div>
 
         <!-- Appointments overlay -->
-        <div class="absolute inset-0 grid grid-cols-8 gap-px pointer-events-none">
+        <div class="absolute inset-0 grid grid-cols-8 gap-px pointer-events-none" :style="{ height: `${hours.length * 60}px` }">
           <div></div> <!-- Empty time column -->
           <div
             v-for="day in weekDays"
