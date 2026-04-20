@@ -10,14 +10,56 @@ import type { Appointment, CalendarConfig, CalendarEvent } from '../types'
 const props = defineProps<{
   appointments?: Appointment[]
   config?: CalendarConfig
+  viewMode?: 'day' | 'week' | 'month'
 }>()
 
 const emit = defineEmits<{
   event: [event: CalendarEvent]
 }>()
 
-const { view, currentDate, navigateToNext, navigateToPrevious, navigateToToday, setView } = useCalendar(props.config)
+const mergedConfig = computed(() => ({
+  ...props.config,
+  view: props.viewMode || props.config?.view || 'month'
+}))
+
+const { view, currentDate, navigateToNext, navigateToPrevious, navigateToToday, setView } = useCalendar(mergedConfig.value)
 const { appointments, addAppointment, updateAppointment, removeAppointment } = useAppointments(props.appointments || [])
+
+// Expose appointment management functions
+const addNewAppointment = (appointment: Appointment): boolean => {
+  const success = addAppointment(appointment, props.config?.allowOverlap || false)
+  if (success) {
+    emit('event', { type: 'appointment-added', payload: appointment })
+  }
+  return success
+}
+
+const updateExistingAppointment = (id: string, updates: Partial<Appointment>): boolean => {
+  const success = updateAppointment(id, updates, props.config?.allowOverlap || false)
+  if (success) {
+    const updated = appointments.value.find(a => a.id === id)
+    if (updated) {
+      emit('event', { type: 'appointment-updated', payload: updated })
+    }
+  }
+  return success
+}
+
+const removeExistingAppointment = (id: string): boolean => {
+  const success = removeAppointment(id)
+  if (success) {
+    emit('event', { type: 'appointment-removed', payload: { id } })
+  }
+  return success
+}
+
+// Expose functions and state for parent components
+defineExpose({
+  appointments,
+  addNewAppointment,
+  updateExistingAppointment,
+  removeExistingAppointment
+})
 
 const currentViewComponent = computed(() => {
   switch (view.value) {

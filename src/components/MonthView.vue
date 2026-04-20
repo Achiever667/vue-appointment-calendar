@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getDaysInMonth, isSameDay, isSameMonth, formatDate } from '../utils/date'
+import AppointmentItem from './AppointmentItem.vue'
 import type { Appointment, CalendarConfig } from '../types'
 
 const props = defineProps<{
@@ -72,22 +73,20 @@ const handleAppointmentClick = (appointment: Appointment) => {
           {{ date.getDate() }}
         </div>
 
-        <div class="space-y-1">
-          <div
+        <div class="space-y-1 max-h-[100px] overflow-hidden">
+          <AppointmentItem
             v-for="appointment in getAppointmentsForDate(date).slice(0, 3)"
             :key="appointment.id"
-            :class="[
-              'text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity',
-              appointment.color || 'bg-blue-100 text-blue-800'
-            ]"
-            @click.stop="handleAppointmentClick(appointment)"
-          >
-            {{ appointment.title }}
-          </div>
+            :appointment="appointment"
+            :show-description="false"
+            :show-attendee="false"
+            class="text-xs"
+            @click="handleAppointmentClick"
+          />
 
           <div
             v-if="getAppointmentsForDate(date).length > 3"
-            class="text-xs text-gray-500"
+            class="text-xs text-gray-500 px-2 py-1"
           >
             +{{ getAppointmentsForDate(date).length - 3 }} more
           </div>

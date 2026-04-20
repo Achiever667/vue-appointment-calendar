@@ -1,4 +1,12 @@
 // src/types/index.ts
+export interface User {
+  id: string
+  name: string
+  avatar?: string
+  initials?: string
+  email?: string
+}
+
 export interface Appointment {
   id: string
   title: string
@@ -7,6 +15,10 @@ export interface Appointment {
   resourceId?: string
   color?: string
   description?: string
+  user?: User
+  attendees?: User[]
+  location?: string
+  notes?: string
 }
 
 export interface CalendarConfig {
@@ -27,7 +39,7 @@ export interface TimeSlot {
 }
 
 export interface CalendarEvent {
-  type: 'appointment-click' | 'slot-click' | 'date-change' | 'view-change'
+  type: 'appointment-click' | 'slot-click' | 'date-change' | 'view-change' | 'appointment-added' | 'appointment-updated' | 'appointment-removed'
   payload: any
 }
 

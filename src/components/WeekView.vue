@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getWeekDays, isSameDay, formatTime, addMinutes } from '../utils/date'
+import AppointmentItem from './AppointmentItem.vue'
 import type { Appointment, CalendarConfig } from '../types'
 
 const props = defineProps<{
@@ -124,10 +125,15 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
               v-for="appointment in getAppointmentsForDay(day)"
               :key="appointment.id"
               :style="getAppointmentStyle(appointment)"
-              class="absolute left-1 right-1 rounded text-xs text-white p-1 truncate cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10"
+              class="absolute left-1 right-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 overflow-hidden"
               @click.stop="handleAppointmentClick(appointment)"
             >
-              {{ appointment.title }}
+              <AppointmentItem
+                :appointment="appointment"
+                :show-description="false"
+                :show-attendee="false"
+                class="h-full"
+              />
             </div>
           </div>
         </div>

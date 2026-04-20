@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getTimeSlots, formatTime, addMinutes } from '../utils/date'
+import AppointmentItem from './AppointmentItem.vue'
 import type { Appointment, CalendarConfig } from '../types'
 
 const props = defineProps<{
@@ -58,18 +59,15 @@ const handleSlotClick = (slot: { start: Date; end: Date }) => {
     <!-- All day appointments -->
     <div v-if="allDayAppointments.length > 0" class="mb-4">
       <h3 class="text-sm font-medium text-gray-700 mb-2">All Day</h3>
-      <div class="space-y-1">
-        <div
+      <div class="space-y-2">
+        <AppointmentItem
           v-for="appointment in allDayAppointments"
           :key="appointment.id"
-          :class="[
-            'p-2 rounded text-sm cursor-pointer hover:opacity-80 transition-opacity',
-            appointment.color || 'bg-blue-100 text-blue-800'
-          ]"
-          @click="handleAppointmentClick(appointment)"
-        >
-          {{ appointment.title }}
-        </div>
+          :appointment="appointment"
+          :show-description="true"
+          :show-attendee="true"
+          @click="handleAppointmentClick"
+        />
       </div>
     </div>
 
@@ -88,21 +86,15 @@ const handleSlotClick = (slot: { start: Date; end: Date }) => {
           {{ formatTime(slot.start) }}
         </div>
 
-        <div class="flex-1 ml-2">
-          <div
+        <div class="flex-1 ml-2 space-y-2">
+          <AppointmentItem
             v-for="appointment in slot.appointments"
             :key="appointment.id"
-            :class="[
-              'text-sm p-1 rounded mb-1 cursor-pointer hover:opacity-80 transition-opacity',
-              appointment.color || 'bg-blue-100 text-blue-800'
-            ]"
-            @click.stop="handleAppointmentClick(appointment)"
-          >
-            {{ appointment.title }}
-            <span class="text-xs opacity-75">
-              ({{ formatTime(appointment.start) }} - {{ formatTime(appointment.end) }})
-            </span>
-          </div>
+            :appointment="appointment"
+            :show-description="true"
+            :show-attendee="true"
+            @click="handleAppointmentClick"
+          />
         </div>
       </div>
     </div>
