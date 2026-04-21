@@ -1,4 +1,6 @@
 // src/types/index.ts
+import type { AxiosInstance } from 'axios'
+
 export interface User {
   id: string
   name: string
@@ -21,6 +23,20 @@ export interface Appointment {
   notes?: string
 }
 
+export interface CalendarApiEndpoints {
+  list: string
+  get: (id: string) => string
+  create: string
+  update: (id: string) => string
+  delete: (id: string) => string
+}
+
+export interface CalendarApiConfig {
+  baseURL?: string
+  client?: AxiosInstance
+  endpoints: CalendarApiEndpoints
+}
+
 export interface CalendarConfig {
   view?: 'day' | 'week' | 'month'
   slotDuration?: number // minutes
@@ -38,9 +54,13 @@ export interface TimeSlot {
   available: boolean
 }
 
-export interface CalendarEvent {
-  type: 'appointment-click' | 'slot-click' | 'date-change' | 'view-change' | 'appointment-added' | 'appointment-updated' | 'appointment-removed'
-  payload: any
-}
-
 export type ViewMode = 'day' | 'week' | 'month'
+
+export type CalendarEvent =
+  | { type: 'appointment-click'; payload: Appointment }
+  | { type: 'slot-click'; payload: { start: Date; end: Date } }
+  | { type: 'date-change'; payload: { date: Date } }
+  | { type: 'view-change'; payload: { view: ViewMode } }
+  | { type: 'appointment-added'; payload: Appointment }
+  | { type: 'appointment-updated'; payload: Appointment }
+  | { type: 'appointment-removed'; payload: { id: string } }

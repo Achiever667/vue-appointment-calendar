@@ -5,10 +5,11 @@ import { useCalendar, useAppointments } from '../composables'
 import MonthView from './MonthView.vue'
 import WeekView from './WeekView.vue'
 import DayView from './DayView.vue'
-import type { Appointment, CalendarConfig, CalendarEvent } from '../types'
+import type { Appointment, CalendarApiConfig, CalendarConfig, CalendarEvent, ViewMode } from '../types'
 
 const props = defineProps<{
   appointments?: Appointment[]
+  apiConfig?: CalendarApiConfig
   config?: CalendarConfig
   viewMode?: 'day' | 'week' | 'month'
 }>()
@@ -22,20 +23,25 @@ const mergedConfig = computed(() => ({
   view: props.viewMode || props.config?.view || 'month'
 }))
 
+const viewOptions: ViewMode[] = ['month', 'week', 'day']
+
 const { view, currentDate, navigateToNext, navigateToPrevious, navigateToToday, setView } = useCalendar(mergedConfig.value)
-const { appointments, addAppointment, updateAppointment, removeAppointment } = useAppointments(props.appointments || [])
+const { appointments, fetchAppointments, addAppointment, updateAppointment, removeAppointment } = useAppointments(
+  props.appointments || [],
+  props.apiConfig
+)
 
 // Expose appointment management functions
-const addNewAppointment = (appointment: Appointment): boolean => {
-  const success = addAppointment(appointment, props.config?.allowOverlap || false)
+const addNewAppointment = async (appointment: Appointment): Promise<boolean> => {
+  const success = await addAppointment(appointment, props.config?.allowOverlap || false)
   if (success) {
     emit('event', { type: 'appointment-added', payload: appointment })
   }
   return success
 }
 
-const updateExistingAppointment = (id: string, updates: Partial<Appointment>): boolean => {
-  const success = updateAppointment(id, updates, props.config?.allowOverlap || false)
+const updateExistingAppointment = async (id: string, updates: Partial<Appointment>): Promise<boolean> => {
+  const success = await updateAppointment(id, updates, props.config?.allowOverlap || false)
   if (success) {
     const updated = appointments.value.find(a => a.id === id)
     if (updated) {
@@ -45,8 +51,8 @@ const updateExistingAppointment = (id: string, updates: Partial<Appointment>): b
   return success
 }
 
-const removeExistingAppointment = (id: string): boolean => {
-  const success = removeAppointment(id)
+const removeExistingAppointment = async (id: string): Promise<boolean> => {
+  const success = await removeAppointment(id)
   if (success) {
     emit('event', { type: 'appointment-removed', payload: { id } })
   }
@@ -56,6 +62,7 @@ const removeExistingAppointment = (id: string): boolean => {
 // Expose functions and state for parent components
 defineExpose({
   appointments,
+  fetchAppointments,
   addNewAppointment,
   updateExistingAppointment,
   removeExistingAppointment
@@ -74,8 +81,8 @@ const currentViewComponent = computed(() => {
   }
 })
 
-const handleViewChange = (newView: string) => {
-  setView(newView as any)
+const handleViewChange = (newView: ViewMode) => {
+  setView(newView)
   emit('event', { type: 'view-change', payload: { view: newView } })
 }
 
@@ -132,7 +139,7 @@ const handleDateChange = (date: Date) => {
 
       <div class="flex items-center space-x-1">
         <button
-          v-for="viewOption in ['month', 'week', 'day']"
+          v-for="viewOption in viewOptions"
           :key="viewOption"
           @click="handleViewChange(viewOption)"
           :class="[
