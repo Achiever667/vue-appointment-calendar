@@ -6,7 +6,16 @@ import TimeSlots from './components/TimeSlots.vue'
 import AppointmentItem from './components/AppointmentItem.vue'
 import plugin from './plugin'
 
-export { Calendar, MonthView, WeekView, DayView, TimeSlots, AppointmentItem }
+export {
+  Calendar,
+  Calendar as AppointmentCalendar,
+  MonthView,
+  WeekView,
+  DayView,
+  TimeSlots,
+  AppointmentItem,
+  plugin
+}
 export * from './types'
 export * from './composables'
 export * from './utils'

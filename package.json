@@ -3,23 +3,28 @@
   "version": "0.0.1",
   "description": "A customizable Vue 3 appointment calendar component",
   "type": "module",
-
-  "main": "dist/vue-appointment-calendar.umd.js",
-  "module": "dist/vue-appointment-calendar.es.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
-
-  "files": ["dist"],
-
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:lib": "vue-tsc -b && node ./scripts/build-lib.mjs",
     "preview": "vite preview"
   },
-
   "peerDependencies": {
     "vue": "^3.3.0"
   },
-
   "devDependencies": {
     "vue": "^3.5.32",
     "@types/node": "^24.12.2",
