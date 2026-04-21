@@ -2,10 +2,10 @@
 <template>
   <div
     :class="[
-      'flex items-center gap-2 p-2 rounded text-white text-xs cursor-pointer hover:opacity-80 transition-opacity relative group',
+      'flex items-center gap-2 p-2 rounded text-white text-xs cursor-pointer hover:opacity-80 transition-opacity relative group overflow-visible',
       appointment.color || 'bg-blue-500'
     ]"
-    @click="$emit('click', appointment)"
+    @click.stop="$emit('click', appointment)"
   >
     <!-- Avatar/Initials -->
     <div class="flex-shrink-0">

@@ -59,7 +59,7 @@ const handleAppointmentClick = (appointment: Appointment) => {
     </div>
 
     <!-- Calendar grid -->
-    <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+    <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg">
       <div
         v-for="date in daysInMonth"
         :key="date.toISOString()"
@@ -73,7 +73,7 @@ const handleAppointmentClick = (appointment: Appointment) => {
           {{ date.getDate() }}
         </div>
 
-        <div class="space-y-1 max-h-[100px] overflow-hidden">
+        <div class="space-y-1 max-h-[100px] overflow-visible relative z-10">
           <AppointmentItem
             v-for="appointment in getAppointmentsForDate(date).slice(0, 3)"
             :key="appointment.id"
