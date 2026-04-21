@@ -1,7 +1,7 @@
 <!-- src/components/MonthView.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getDaysInMonth, isSameDay, isSameMonth, formatDate } from '../utils/date'
+import { getDaysInMonth, isSameMonth } from '../utils/date'
 import AppointmentItem from './AppointmentItem.vue'
 import type { Appointment, CalendarConfig } from '../types'
 

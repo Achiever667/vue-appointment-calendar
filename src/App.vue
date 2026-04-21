@@ -206,7 +206,7 @@ const handleDeleteAppointment = (id: string) => {
       </div>
       <p class="text-gray-600">Manage your appointments and schedule</p>
       <div class="mt-4 p-4 bg-blue-50 rounded-lg hidden">
-        <h3 class="text-lg font-semibold text-blue-900 mb-2">✨ Features Demonstrated</h3>
+        <h3 class="text-lg font-semibold text-blue-900 mb-2"> Features Demonstrated</h3>
         <ul class="text-sm text-blue-800 space-y-1">
           <li>• <strong>User Avatars & Initials:</strong> Each appointment shows the attendee's avatar or initials</li>
           <li>• <strong>Rich Tooltips:</strong> Hover over any appointment to see full details</li>

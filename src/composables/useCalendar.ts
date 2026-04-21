@@ -1,11 +1,13 @@
 // src/composables/useCalendar.ts
-import { ref, computed, watch } from 'vue'
-import type { CalendarConfig, ViewMode, CalendarEvent } from '../types'
+import { ref, computed } from 'vue'
+import type { CalendarConfig, ViewMode, 
+  // CalendarEvent 
+} from '../types'
 import {
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
+  // startOfMonth,
+  // endOfMonth,
+  // startOfWeek,
+  // endOfWeek,
   addDays,
   getDaysInMonth,
   getWeekDays,

@@ -1,7 +1,7 @@
 <!-- src/components/WeekView.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getWeekDays, isSameDay, formatTime, addMinutes } from '../utils/date'
+import { getWeekDays, isSameDay, addMinutes } from '../utils/date'
 import AppointmentItem from './AppointmentItem.vue'
 import type { Appointment, CalendarConfig } from '../types'
 
