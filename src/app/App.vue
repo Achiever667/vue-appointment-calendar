@@ -150,6 +150,7 @@ const openNewAppointmentModal = () => {
       <Calendar
         ref="calendarRef"
         :appointments="appointments"
+          view-mode="week"
         :config="config"
         @event="handleEvent"
       />

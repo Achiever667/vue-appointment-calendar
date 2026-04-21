@@ -133,6 +133,7 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
                 :show-description="false"
                 :show-attendee="false"
                 class="h-full"
+                @click="handleAppointmentClick"
               />
             </div>
           </div>
