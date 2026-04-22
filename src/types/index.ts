@@ -23,6 +23,14 @@ export interface Appointment {
   notes?: string
 }
 
+export interface AppointmentRepository {
+  getAll(): Promise<Appointment[]>
+  getById(id: string): Promise<Appointment>
+  create(appointment: Appointment): Promise<Appointment>
+  update(id: string, appointment: Partial<Appointment>): Promise<Appointment>
+  remove(id: string): Promise<void>
+}
+
 export interface CalendarApiEndpoints {
   list: string
   get: (id: string) => string
@@ -55,6 +63,12 @@ export interface TimeSlot {
 }
 
 export type ViewMode = 'day' | 'week' | 'month'
+
+export interface UseAppointmentsOptions {
+  initialAppointments?: Appointment[]
+  repository?: AppointmentRepository
+  autoFetch?: boolean
+}
 
 export type CalendarEvent =
   | { type: 'appointment-click'; payload: Appointment }

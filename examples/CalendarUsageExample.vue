@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppointmentCalendar from '../src/components/Calendar.vue'
+import { createApiAppointmentRepository } from '../src/api'
 import type { Appointment, CalendarApiConfig, CalendarConfig } from '../src/types'
 
 const localAppointments = ref<Appointment[]>([
@@ -41,6 +42,8 @@ const apiConfig: CalendarApiConfig = {
     delete: (id: string) => `/appointments/${id}`
   }
 }
+
+const appointmentRepository = createApiAppointmentRepository(apiConfig)
 </script>
 
 <template>
@@ -63,13 +66,13 @@ const apiConfig: CalendarApiConfig = {
       <div>
         <h2 class="text-xl font-semibold text-slate-900">API-Backed Usage</h2>
         <p class="text-sm text-slate-600">
-          Pass <code>apiConfig</code> to load and persist appointments through your backend.
+          Inject a repository so the calendar depends on an abstraction instead of a concrete API config.
         </p>
       </div>
 
       <AppointmentCalendar
         :config="calendarConfig"
-        :api-config="apiConfig"
+        :repository="appointmentRepository"
       />
     </section>
   </div>

@@ -1,14 +1,23 @@
 <!-- src/components/Calendar.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
+import { createApiAppointmentRepository } from '../api'
 import { useCalendar, useAppointments } from '../composables'
 import MonthView from './MonthView.vue'
 import WeekView from './WeekView.vue'
 import DayView from './DayView.vue'
-import type { Appointment, CalendarApiConfig, CalendarConfig, CalendarEvent, ViewMode } from '../types'
+import type {
+  Appointment,
+  AppointmentRepository,
+  CalendarApiConfig,
+  CalendarConfig,
+  CalendarEvent,
+  ViewMode
+} from '../types'
 
 const props = defineProps<{
   appointments?: Appointment[]
+  repository?: AppointmentRepository
   apiConfig?: CalendarApiConfig
   config?: CalendarConfig
   viewMode?: 'day' | 'week' | 'month'
@@ -24,12 +33,16 @@ const mergedConfig = computed(() => ({
 }))
 
 const viewOptions: ViewMode[] = ['month', 'week', 'day']
+const appointmentRepository = props.repository ?? (props.apiConfig
+  ? createApiAppointmentRepository(props.apiConfig)
+  : undefined)
 
 const { view, currentDate, navigateToNext, navigateToPrevious, navigateToToday, setView } = useCalendar(mergedConfig.value)
-const { appointments, fetchAppointments, addAppointment, updateAppointment, removeAppointment } = useAppointments(
-  props.appointments || [],
-  props.apiConfig
-)
+const { appointments, fetchAppointments, addAppointment, updateAppointment, removeAppointment } = useAppointments({
+  initialAppointments: props.appointments || [],
+  repository: appointmentRepository,
+  autoFetch: Boolean(appointmentRepository)
+})
 
 // Expose appointment management functions
 const addNewAppointment = async (appointment: Appointment): Promise<boolean> => {

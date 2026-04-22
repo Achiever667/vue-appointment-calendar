@@ -1,8 +1,15 @@
-// src/composables/useAppointments.ts
 import { ref, computed, onMounted } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
-import type { Appointment, CalendarApiConfig } from '../types'
-import { createAppointmentService } from '../api/appointments'
+import type {
+  Appointment,
+  AppointmentRepository,
+  CalendarApiConfig,
+  UseAppointmentsOptions
+} from '../types'
+import {
+  createApiAppointmentRepository,
+  createInMemoryAppointmentRepository
+} from '../api/appointments'
 import { canAddAppointment, getConflictingAppointments } from '../utils/conflict'
 import { isSameDay } from '../utils/date'
 
@@ -19,27 +26,60 @@ interface UseAppointmentsResult {
   clearAppointments: () => void
 }
 
-const isCalendarApiConfig = (value: Appointment[] | CalendarApiConfig | undefined): value is CalendarApiConfig => {
+const isCalendarApiConfig = (
+  value: Appointment[] | CalendarApiConfig | UseAppointmentsOptions | undefined
+): value is CalendarApiConfig => {
   return typeof value === 'object' && value !== null && !Array.isArray(value) && 'endpoints' in value
+}
+
+const isUseAppointmentsOptions = (
+  value: Appointment[] | CalendarApiConfig | UseAppointmentsOptions | undefined
+): value is UseAppointmentsOptions => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) &&
+    ('repository' in value || 'initialAppointments' in value || 'autoFetch' in value)
+}
+
+const resolveRepository = (
+  initialAppointments: Appointment[],
+  repository?: AppointmentRepository,
+  apiConfig?: CalendarApiConfig
+): AppointmentRepository => {
+  if (repository) {
+    return repository
+  }
+
+  if (apiConfig) {
+    return createApiAppointmentRepository(apiConfig)
+  }
+
+  return createInMemoryAppointmentRepository(initialAppointments)
 }
 
 export function useAppointments(apiConfig?: CalendarApiConfig): UseAppointmentsResult
 export function useAppointments(initialAppointments?: Appointment[], apiConfig?: CalendarApiConfig): UseAppointmentsResult
+export function useAppointments(options?: UseAppointmentsOptions): UseAppointmentsResult
 export function useAppointments(
-  initialAppointmentsOrApiConfig: Appointment[] | CalendarApiConfig = [],
+  initialAppointmentsOrOptionsOrApiConfig: Appointment[] | CalendarApiConfig | UseAppointmentsOptions = [],
   apiConfig?: CalendarApiConfig
 ): UseAppointmentsResult {
-  const initialAppointments = isCalendarApiConfig(initialAppointmentsOrApiConfig) ? [] : initialAppointmentsOrApiConfig
-  const resolvedApiConfig = isCalendarApiConfig(initialAppointmentsOrApiConfig) ? initialAppointmentsOrApiConfig : apiConfig
+  const options = isUseAppointmentsOptions(initialAppointmentsOrOptionsOrApiConfig)
+    ? initialAppointmentsOrOptionsOrApiConfig
+    : undefined
+  let initialAppointments: Appointment[] = options?.initialAppointments ?? []
+  let resolvedApiConfig = apiConfig
+
+  if (isCalendarApiConfig(initialAppointmentsOrOptionsOrApiConfig)) {
+    resolvedApiConfig = initialAppointmentsOrOptionsOrApiConfig
+  } else if (Array.isArray(initialAppointmentsOrOptionsOrApiConfig)) {
+    initialAppointments = initialAppointmentsOrOptionsOrApiConfig
+  }
+
+  const repository = resolveRepository(initialAppointments, options?.repository, resolvedApiConfig)
+  const shouldAutoFetch = options?.autoFetch ?? Boolean(options?.repository || resolvedApiConfig)
   const appointments: Ref<Appointment[]> = ref([...initialAppointments])
-  const appointmentService = resolvedApiConfig ? createAppointmentService(resolvedApiConfig) : null
 
   const fetchAppointments = async (): Promise<Appointment[]> => {
-    if (!appointmentService) {
-      return appointments.value
-    }
-
-    const fetchedAppointments = await appointmentService.getAll()
+    const fetchedAppointments = await repository.getAll()
     appointments.value = fetchedAppointments
     return fetchedAppointments
   }
@@ -49,13 +89,8 @@ export function useAppointments(
       return false
     }
 
-    if (appointmentService) {
-      const createdAppointment = await appointmentService.create(appointment)
-      appointments.value.push(createdAppointment)
-      return true
-    }
-
-    appointments.value.push(appointment)
+    const createdAppointment = await repository.create(appointment)
+    appointments.value.push(createdAppointment)
     return true
   }
 
@@ -64,7 +99,7 @@ export function useAppointments(
     updates: Partial<Appointment>,
     allowOverlap: boolean = false
   ): Promise<boolean> => {
-    const index = appointments.value.findIndex(app => app.id === id)
+    const index = appointments.value.findIndex((app) => app.id === id)
     if (index === -1) return false
 
     const updatedAppointment = { ...appointments.value[index], ...updates }
@@ -74,50 +109,44 @@ export function useAppointments(
       return false
     }
 
-    if (appointmentService) {
-      const persistedAppointment = await appointmentService.update(id, updatedAppointment)
-      appointments.value[index] = persistedAppointment
-      return true
-    }
-
-    appointments.value[index] = updatedAppointment
+    const persistedAppointment = await repository.update(id, updatedAppointment)
+    appointments.value[index] = persistedAppointment
     return true
   }
 
   const removeAppointment = async (id: string): Promise<boolean> => {
-    const index = appointments.value.findIndex(app => app.id === id)
+    const index = appointments.value.findIndex((app) => app.id === id)
     if (index === -1) return false
 
-    if (appointmentService) {
-      await appointmentService.remove(id)
-    }
-
+    await repository.remove(id)
     appointments.value.splice(index, 1)
     return true
   }
 
   const getAppointmentById = async (id: string): Promise<Appointment | undefined> => {
-    const localAppointment = appointments.value.find(app => app.id === id)
-    if (!appointmentService || localAppointment) {
+    const localAppointment = appointments.value.find((app) => app.id === id)
+    if (localAppointment) {
       return localAppointment
     }
 
-    const fetchedAppointment = await appointmentService.getById(id)
-    if (!appointments.value.some((app) => app.id === fetchedAppointment.id)) {
-      appointments.value.push(fetchedAppointment)
-    }
+    try {
+      const fetchedAppointment = await repository.getById(id)
+      if (!appointments.value.some((app) => app.id === fetchedAppointment.id)) {
+        appointments.value.push(fetchedAppointment)
+      }
 
-    return fetchedAppointment
+      return fetchedAppointment
+    } catch {
+      return undefined
+    }
   }
 
   const getAppointmentsForDate = (date: Date): Appointment[] => {
-    return appointments.value.filter(app => isSameDay(app.start, date))
+    return appointments.value.filter((app) => isSameDay(app.start, date))
   }
 
   const getAppointmentsInRange = (start: Date, end: Date): Appointment[] => {
-    return appointments.value.filter(app =>
-      app.start < end && app.end > start
-    )
+    return appointments.value.filter((app) => app.start < end && app.end > start)
   }
 
   const getConflicting = (appointment: Appointment): Appointment[] => {
@@ -129,7 +158,7 @@ export function useAppointments(
   }
 
   onMounted(() => {
-    if (appointmentService) {
+    if (shouldAutoFetch) {
       void fetchAppointments()
     }
   })
