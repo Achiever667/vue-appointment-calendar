@@ -93,7 +93,7 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
       </div>
 
       <!-- Time grid -->
-      <div class="relative" :style="{ height: `${hours.length * 60}px` }">
+      <div class="relative overflow-visible" :style="{ height: `${hours.length * 60}px` }">
         <div
           v-for="hour in hours"
           :key="hour"
@@ -126,18 +126,18 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
         </div>
 
         <!-- Appointments overlay -->
-        <div class="absolute inset-0 grid grid-cols-8 gap-px pointer-events-none" :style="{ height: `${hours.length * 60}px` }">
+        <div class="absolute inset-0 grid  grid-cols-8 gap-px pointer-events-none overflow-visible" :style="{ height: `${hours.length * 60}px` }">
           <div></div> <!-- Empty time column -->
           <div
             v-for="day in weekDays"
             :key="`appointments-${day.toISOString()}`"
-            class="relative"
+            class="relative overflow-visible"
           >
             <div
               v-for="appointment in getAppointmentsForDay(day)"
               :key="appointment.id"
               :style="getAppointmentStyle(appointment)"
-              class="absolute left-1 right-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 overflow-visible"
+              class="absolute left-1 right-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 overflow-visible hover:z-30 focus-within:z-30"
               @click.stop="handleAppointmentClick(appointment)"
             >
               <slot

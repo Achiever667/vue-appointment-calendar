@@ -48,7 +48,7 @@
 
     <!-- Tooltip -->
     <div
-      class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 min-w-max max-w-xs"
+      class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-black z-9999 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 min-w-max max-w-xs"
     >
       <div class="font-semibold mb-1">{{ appointment.title }}</div>
       <div class="space-y-1">
