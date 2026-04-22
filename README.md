@@ -1,39 +1,26 @@
 # Vue Appointment Calendar
 
-A customizable, modular Vue 3 appointment calendar component built with TypeScript, Vite, and Tailwind CSS. Perfect for scheduling applications, booking systems, and any project that needs calendar functionality.
+A customizable Vue 3 appointment calendar built with TypeScript, Vite, and Tailwind CSS.
 
-## ✨ Features
+It supports month, week, and day views, appointment CRUD flows, API-backed repositories, and scoped-slot UI customization.
 
-- 📅 **Multiple Views**: Month, Week, and Day views
-- 🎨 **Customizable Styling**: Built with Tailwind CSS for easy customization
-- 🔧 **Modular Architecture**: Separate logic (composables) from UI (components)
-- 📱 **Responsive Design**: Works seamlessly on desktop and mobile
-- 🏗️ **TypeScript Support**: Full type safety with comprehensive TypeScript definitions
-- 🎯 **Event Handling**: Rich event system for appointments and user interactions
-- ⚡ **Performance Optimized**: Efficient rendering and state management
-- 🔄 **Conflict Detection**: Built-in appointment conflict detection
-- 🎭 **Plugin Support**: Easy integration via Vue plugin
+## Features
 
-## 🚀 Installation
+- Month, week, and day views
+- Composition API composables for reusable calendar logic
+- Repository-based persistence abstraction
+- TypeScript types for appointments, config, events, and repositories
+- Slot-based UI customization for header, cells, and appointment rendering
+- Conflict detection for overlapping appointments
+- Vue plugin support
 
-### Via npm
+## Installation
+
 ```bash
 npm install vue-appointment-calendar
 ```
 
-### Via yarn
-```bash
-yarn add vue-appointment-calendar
-```
-
-### Via pnpm
-```bash
-pnpm add vue-appointment-calendar
-```
-
-## 📖 Usage
-
-### Basic Setup
+## Basic Usage
 
 ```vue
 <template>
@@ -45,6 +32,7 @@ pnpm add vue-appointment-calendar
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { AppointmentCalendar } from 'vue-appointment-calendar'
 import type { Appointment, CalendarConfig, CalendarEvent } from 'vue-appointment-calendar'
 
@@ -52,8 +40,8 @@ const appointments = ref<Appointment[]>([
   {
     id: '1',
     title: 'Team Meeting',
-    start: new Date(2024, 3, 18, 10, 0),
-    end: new Date(2024, 3, 18, 11, 0),
+    start: new Date(2026, 3, 18, 10, 0),
+    end: new Date(2026, 3, 18, 11, 0),
     color: 'bg-blue-500'
   }
 ])
@@ -67,62 +55,161 @@ const calendarConfig: CalendarConfig = {
 }
 
 const handleCalendarEvent = (event: CalendarEvent) => {
-  console.log('Calendar event:', event)
+  console.log(event)
 }
 </script>
 ```
 
-### Vue Plugin Setup
+## Repository Usage
 
-```ts
-import { createApp } from 'vue'
-import App from './App.vue'
-import VueAppointmentCalendar from 'vue-appointment-calendar'
-
-const app = createApp(App)
-app.use(VueAppointmentCalendar)
-app.mount('#app')
-```
-
-Then use the global component:
+The calendar supports dependency injection through `AppointmentRepository`. This keeps the UI layer independent from HTTP details.
 
 ```vue
+<script setup lang="ts">
+import { AppointmentCalendar, createApiAppointmentRepository } from 'vue-appointment-calendar'
+import type { CalendarApiConfig, CalendarConfig } from 'vue-appointment-calendar'
+
+const config: CalendarConfig = {
+  view: 'week',
+  slotDuration: 30,
+  startHour: 8,
+  endHour: 18
+}
+
+const apiConfig: CalendarApiConfig = {
+  baseURL: 'https://example.com/api',
+  endpoints: {
+    list: '/appointments',
+    get: (id: string) => `/appointments/${id}`,
+    create: '/appointments',
+    update: (id: string) => `/appointments/${id}`,
+    delete: (id: string) => `/appointments/${id}`
+  }
+}
+
+const repository = createApiAppointmentRepository(apiConfig)
+</script>
+
 <template>
   <AppointmentCalendar
-    :appointments="appointments"
     :config="config"
+    :repository="repository"
   />
 </template>
 ```
 
-## 📚 API Reference
+`apiConfig` is still supported for backward compatibility, but `repository` is the cleaner pattern going forward.
+
+## UI Customization
+
+The calendar logic and UI are separated. You can keep the built-in behavior and replace the rendered UI with scoped slots.
+
+### Example
+
+```vue
+<AppointmentCalendar :appointments="appointments" :config="config">
+  <template #header="{ currentDate, navigateToPrevious, navigateToNext, navigateToToday, view, viewOptions, setView }">
+    <div class="rounded-3xl bg-slate-900 p-5 text-white">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-2xl font-semibold">
+          {{ currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
+        </h2>
+
+        <div class="flex gap-2">
+          <button type="button" @click="navigateToPrevious()">Prev</button>
+          <button type="button" @click="navigateToToday()">Today</button>
+          <button type="button" @click="navigateToNext()">Next</button>
+          <button
+            v-for="option in viewOptions"
+            :key="option"
+            type="button"
+            @click="setView(option)"
+          >
+            {{ option }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template #week-cell="{ slotStart }">
+    <div class="h-full bg-gradient-to-br from-white to-slate-50"></div>
+    <div class="absolute left-2 top-2 text-[10px] text-slate-300">
+      {{ slotStart.getHours() }}:00
+    </div>
+  </template>
+
+  <template #appointment="{ appointment, selectAppointment }">
+    <button
+      type="button"
+      class="w-full rounded-2xl bg-slate-900 p-2 text-left text-white"
+      @click.stop="selectAppointment(appointment)"
+    >
+      <div class="text-xs uppercase text-emerald-300">
+        {{ appointment.location || 'No location' }}
+      </div>
+      <div class="mt-1 font-semibold">{{ appointment.title }}</div>
+    </button>
+  </template>
+</AppointmentCalendar>
+```
+
+### Available Slots
+
+- `header`
+- `appointment`
+- `month-weekday`
+- `month-day`
+- `week-header-day`
+- `week-time-label`
+- `week-cell`
+- `day-all-day-header`
+- `day-slot`
+
+## API Reference
 
 ### Props
 
 #### `appointments`
-- **Type**: `Appointment[]`
-- **Required**: No
-- **Default**: `[]`
-- **Description**: Array of appointment objects to display on the calendar
+
+- Type: `Appointment[]`
+- Required: No
+- Default: `[]`
+
+#### `repository`
+
+- Type: `AppointmentRepository`
+- Required: No
+- Default: `undefined`
+
+#### `apiConfig`
+
+- Type: `CalendarApiConfig`
+- Required: No
+- Default: `undefined`
 
 #### `config`
-- **Type**: `CalendarConfig`
-- **Required**: No
-- **Default**: See below
-- **Description**: Configuration object for calendar behavior
+
+- Type: `CalendarConfig`
+- Required: No
+
+#### `viewMode`
+
+- Type: `'day' | 'week' | 'month'`
+- Required: No
 
 ### CalendarConfig
 
 ```ts
 interface CalendarConfig {
-  view?: 'day' | 'week' | 'month' // Default: 'month'
-  slotDuration?: number // Minutes, default: 30
-  startHour?: number // Default: 8
-  endHour?: number // Default: 17
-  allowOverlap?: boolean // Default: false
-  date?: Date // Default: new Date()
-  locale?: string // Default: 'en-US'
-  timeZone?: string // Default: 'UTC'
+  view?: 'day' | 'week' | 'month'
+  slotDuration?: number
+  startHour?: number
+  endHour?: number
+  allowOverlap?: boolean
+  date?: Date
+  locale?: string
+  timeZone?: string
 }
 ```
 
@@ -137,67 +224,53 @@ interface Appointment {
   resourceId?: string
   color?: string
   description?: string
+  user?: User
+  attendees?: User[]
+  location?: string
+  notes?: string
+}
+```
+
+### AppointmentRepository
+
+```ts
+interface AppointmentRepository {
+  getAll(): Promise<Appointment[]>
+  getById(id: string): Promise<Appointment>
+  create(appointment: Appointment): Promise<Appointment>
+  update(id: string, appointment: Partial<Appointment>): Promise<Appointment>
+  remove(id: string): Promise<void>
 }
 ```
 
 ### Events
 
-#### `@event`
-- **Payload**: `CalendarEvent`
-- **Description**: Emitted for various calendar interactions
-
 ```ts
-interface CalendarEvent {
-  type: 'appointment-click' | 'slot-click' | 'date-change' | 'view-change'
-  payload: any
-}
+type CalendarEvent =
+  | { type: 'appointment-click'; payload: Appointment }
+  | { type: 'slot-click'; payload: { start: Date; end: Date } }
+  | { type: 'date-change'; payload: { date: Date } }
+  | { type: 'view-change'; payload: { view: ViewMode } }
+  | { type: 'appointment-added'; payload: Appointment }
+  | { type: 'appointment-updated'; payload: Appointment }
+  | { type: 'appointment-removed'; payload: { id: string } }
 ```
 
-## 🎨 Customization
-
-### Custom Styling
-
-The calendar uses Tailwind CSS classes, making it easy to customize:
-
-```vue
-<template>
-  <AppointmentCalendar
-    class="custom-calendar"
-    :appointments="appointments"
-  />
-</template>
-
-<style scoped>
-.custom-calendar {
-  /* Your custom styles */
-}
-</style>
-```
-
-### Custom Appointment Colors
-
-```ts
-const appointments = [
-  {
-    id: '1',
-    title: 'Meeting',
-    start: new Date(),
-    end: new Date(),
-    color: 'bg-red-500' // Tailwind color class
-  }
-]
-```
-
-## 🛠️ Composables
-
-The library provides composables for advanced usage:
+## Composables
 
 ### `useCalendar`
 
 ```ts
 import { useCalendar } from 'vue-appointment-calendar'
 
-const { currentDate, view, navigateToNext, navigateToPrevious, setView } = useCalendar(config)
+const {
+  currentDate,
+  view,
+  navigateToNext,
+  navigateToPrevious,
+  navigateToToday,
+  setView
+} = useCalendar(config)
 ```
 
 ### `useAppointments`
@@ -205,7 +278,16 @@ const { currentDate, view, navigateToNext, navigateToPrevious, setView } = useCa
 ```ts
 import { useAppointments } from 'vue-appointment-calendar'
 
-const { appointments, addAppointment, updateAppointment, removeAppointment } = useAppointments(initialAppointments)
+const {
+  appointments,
+  fetchAppointments,
+  addAppointment,
+  updateAppointment,
+  removeAppointment
+} = useAppointments({
+  initialAppointments,
+  repository
+})
 ```
 
 ### `useSlots`
@@ -216,80 +298,47 @@ import { useSlots } from 'vue-appointment-calendar'
 const { daySlots, isSlotAvailable } = useSlots(appointments, startHour, endHour, slotDuration, date)
 ```
 
-## 🏗️ Architecture
+## Architecture
 
-The library follows a modular architecture:
+This project does not use the Saga pattern.
 
-```
+It follows a Vue Composition API + repository-based modular architecture with SOLID-inspired separation of concerns:
+
+- Composition API: reusable behavior is split into composables such as `useCalendar`, `useAppointments`, and `useSlots`
+- Repository pattern: persistence is abstracted behind `AppointmentRepository`
+- Dependency inversion: the calendar can depend on an injected repository rather than a concrete API client
+- Single responsibility: UI rendering, state handling, persistence, and utilities live in separate layers
+
+### Structure
+
+```text
 src/
-├── components/     # UI components
-│   ├── Calendar.vue
-│   ├── MonthView.vue
-│   ├── WeekView.vue
-│   ├── DayView.vue
-│   └── TimeSlots.vue
-├── composables/    # Business logic
-│   ├── useCalendar.ts
-│   ├── useAppointments.ts
-│   └── useSlots.ts
-├── types/         # TypeScript definitions
-├── utils/         # Helper functions
-│   ├── date.ts
-│   └── conflict.ts
-└── plugin/        # Vue plugin
+  components/   UI components and views
+  composables/  calendar and appointment behavior
+  api/          repository adapters and API client
+  types/        shared TypeScript contracts
+  utils/        date and conflict helpers
+  plugin/       Vue plugin entry
 ```
 
-## 🔧 Development
+## Plugin Usage
 
-### Prerequisites
+```ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import VueAppointmentCalendar from 'vue-appointment-calendar'
 
-- Node.js 16+
-- npm, yarn, or pnpm
+createApp(App).use(VueAppointmentCalendar).mount('#app')
+```
 
-### Setup
+## Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/vue-appointment-calendar.git
-cd vue-appointment-calendar
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-
-# Build for production
 npm run build
 ```
 
-### Available Scripts
+## License
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Vue 3](https://vuejs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Bundled with [Vite](https://vitejs.dev/)
-- TypeScript support via [Vue TypeScript](https://vuejs.org/guide/typescript/overview.html)
-
-## 📞 Support
-
-If you have any questions or need help, please open an issue on GitHub.
+MIT
