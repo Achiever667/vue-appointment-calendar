@@ -85,8 +85,10 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
           :key="day.toISOString()"
           class="p-2 text-center text-sm font-medium text-gray-500 bg-gray-50"
         >
-          <div>{{ day.toLocaleDateString('en-US', { weekday: 'short' }) }}</div>
-          <div class="text-xs">{{ day.getDate() }}</div>
+          <slot name="week-header-day" :date="day">
+            <div>{{ day.toLocaleDateString('en-US', { weekday: 'short' }) }}</div>
+            <div class="text-xs">{{ day.getDate() }}</div>
+          </slot>
         </div>
       </div>
 
@@ -100,7 +102,9 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
         >
           <!-- Time label -->
           <div class="bg-gray-50 p-2 text-xs text-gray-500 border-r border-gray-200 flex items-start">
-            {{ hour }}:00
+            <slot name="week-time-label" :hour="hour">
+              {{ hour }}:00
+            </slot>
           </div>
 
           <!-- Day columns -->
@@ -110,6 +114,14 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
             class="bg-white border-r border-b border-gray-200 relative cursor-pointer hover:bg-gray-50 transition-colors"
             @click="handleTimeSlotClick(day, hour)"
           >
+            <slot
+              name="week-cell"
+              :date="day"
+              :hour="hour"
+              :slot-start="new Date(new Date(day).setHours(hour, 0, 0, 0))"
+              :slot-end="addMinutes(new Date(new Date(day).setHours(hour, 0, 0, 0)), slotDuration)"
+              :select-slot="handleTimeSlotClick"
+            />
           </div>
         </div>
 
@@ -128,13 +140,22 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
               class="absolute left-1 right-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 overflow-visible"
               @click.stop="handleAppointmentClick(appointment)"
             >
-              <AppointmentItem
+              <slot
+                name="appointment"
                 :appointment="appointment"
-                :show-description="false"
-                :show-attendee="false"
-                class="h-full"
-                @click="handleAppointmentClick"
-              />
+                :view="'week'"
+                :date="day"
+                :style="getAppointmentStyle(appointment)"
+                :select-appointment="handleAppointmentClick"
+              >
+                <AppointmentItem
+                  :appointment="appointment"
+                  :show-description="false"
+                  :show-attendee="false"
+                  class="h-full"
+                  @click="handleAppointmentClick"
+                />
+              </slot>
             </div>
           </div>
         </div>

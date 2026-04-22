@@ -1,6 +1,6 @@
 <!-- src/components/Calendar.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { createApiAppointmentRepository } from '../api'
 import { useCalendar, useAppointments } from '../composables'
 import MonthView from './MonthView.vue'
@@ -26,6 +26,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   event: [event: CalendarEvent]
 }>()
+const slots = useSlots()
 
 const mergedConfig = computed(() => ({
   ...props.config,
@@ -94,6 +95,10 @@ const currentViewComponent = computed(() => {
   }
 })
 
+const forwardedSlotNames = computed(() =>
+  Object.keys(slots).filter((name) => !['default', 'header'].includes(name))
+)
+
 const handleViewChange = (newView: ViewMode) => {
   setView(newView)
   emit('event', { type: 'view-change', payload: { view: newView } })
@@ -114,59 +119,69 @@ const handleDateChange = (date: Date) => {
 
 <template>
   <div class="vac-calendar bg-white border border-gray-200 rounded-lg shadow-sm">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200">
-      <div class="flex items-center space-x-2">
-        <button
-          @click="navigateToPrevious"
-          class="p-2 hover:bg-gray-100 rounded-md transition-colors"
-          type="button"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-        </button>
+    <slot
+      name="header"
+      :view="view"
+      :view-options="viewOptions"
+      :current-date="currentDate"
+      :navigate-to-previous="navigateToPrevious"
+      :navigate-to-next="navigateToNext"
+      :navigate-to-today="navigateToToday"
+      :set-view="handleViewChange"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <div class="flex items-center space-x-2">
+          <button
+            @click="navigateToPrevious"
+            class="p-2 hover:bg-gray-100 rounded-md transition-colors"
+            type="button"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
 
-        <button
-          @click="navigateToToday"
-          class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-          type="button"
-        >
-          Today
-        </button>
+          <button
+            @click="navigateToToday"
+            class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+            type="button"
+          >
+            Today
+          </button>
 
-        <button
-          @click="navigateToNext"
-          class="p-2 hover:bg-gray-100 rounded-md transition-colors"
-          type="button"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
+          <button
+            @click="navigateToNext"
+            class="p-2 hover:bg-gray-100 rounded-md transition-colors"
+            type="button"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
 
-        <h2 class="text-lg font-semibold text-gray-900 ml-4">
-          {{ currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
-        </h2>
+          <h2 class="text-lg font-semibold text-gray-900 ml-4">
+            {{ currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
+          </h2>
+        </div>
+
+        <div class="flex items-center space-x-1">
+          <button
+            v-for="viewOption in viewOptions"
+            :key="viewOption"
+            @click="handleViewChange(viewOption)"
+            :class="[
+              'px-3 py-2 text-sm font-medium rounded-md transition-colors capitalize',
+              view === viewOption
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-100'
+            ]"
+            type="button"
+          >
+            {{ viewOption }}
+          </button>
+        </div>
       </div>
-
-      <div class="flex items-center space-x-1">
-        <button
-          v-for="viewOption in viewOptions"
-          :key="viewOption"
-          @click="handleViewChange(viewOption)"
-          :class="[
-            'px-3 py-2 text-sm font-medium rounded-md transition-colors capitalize',
-            view === viewOption
-              ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-700 hover:bg-gray-100'
-          ]"
-          type="button"
-        >
-          {{ viewOption }}
-        </button>
-      </div>
-    </div>
+    </slot>
 
     <!-- Calendar Grid -->
     <div class="p-4">
@@ -178,7 +193,15 @@ const handleDateChange = (date: Date) => {
         @appointment-click="handleAppointmentClick"
         @slot-click="handleSlotClick"
         @date-change="handleDateChange"
-      />
+      >
+        <template
+          v-for="slotName in forwardedSlotNames"
+          :key="slotName"
+          #[slotName]="slotProps"
+        >
+          <slot :name="slotName" v-bind="slotProps" />
+        </template>
+      </component>
     </div>
   </div>
 </template>
