@@ -137,7 +137,7 @@ const handleTimeSlotClick = (date: Date, hour: number) => {
               v-for="appointment in getAppointmentsForDay(day)"
               :key="appointment.id"
               :style="getAppointmentStyle(appointment)"
-              class="absolute left-1 right-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 overflow-visible hover:z-30 focus-within:z-30"
+              class="absolute left-1 right-1 rounded text-white cursor-pointer transition-all duration-200 pointer-events-auto z-20 overflow-visible hover:z-40 focus-within:z-40 hover:brightness-105"
               @click.stop="handleAppointmentClick(appointment)"
             >
               <slot

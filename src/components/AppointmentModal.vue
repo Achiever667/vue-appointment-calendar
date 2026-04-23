@@ -6,7 +6,6 @@
       @click="closeModal"
     ></div>
 
-    <!-- Modal -->
     <div class="absolute inset-0 flex items-center justify-center p-4">
       <div
         class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-hidden"
@@ -31,7 +30,6 @@
           </button>
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleSubmit" class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
           <!-- Title -->
           <div>
@@ -241,7 +239,6 @@ watch(() => props.isOpen, (newVal) => {
       formData.endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
       formData.color = props.appointment.color || 'bg-blue-500'
     } else if (props.slotStart && props.slotEnd) {
-      // New appointment from slot
       const start = new Date(props.slotStart)
       const end = new Date(props.slotEnd)
       
